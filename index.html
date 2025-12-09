@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f6f8fa;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 24px;
+        }
+        
+        h1 {
+            color: #24292e;
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin: 16px 0 6px;
+            font-weight: 600;
+            color: #24292e;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: #2ea44f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #2c974b;
+        }
+        
+        .btn:disabled {
+            background: #959da6;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+        }
+        
+        .success {
+            background: #dafbe1;
+            color: #1a7f37;
+        }
+        
+        .error {
+            background: #ffebe9;
+            color: #cf222e;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Contact / Inquiry</h1>
+        <form id="contactForm">
+            <label for="name">Name (optional)</label>
+            <input type="text" id="name" name="name">
+            
+            <label for="email">Email (optional)</label>
+            <input type="email" id="email" name="email">
+            
+            <label for="type">Inquiry Type</label>
+            <select id="type" name="type" required>
+                <option value="">Select an option</option>
+                <option value="Question">Question</option>
+                <option value="Comment">Comment</option>
+                <option value="Bug">Bug Report</option>
+                <option value="Feature">Feature Request</option>
+                <option value="Contract">Contract Work Inquiry</option>
+                <option value="Other">Other</option>
+            </select>
+            
+            <label for="title">Subject</label>
+            <input type="text" id="title" name="title" required>
+            
+            <label for="body">Message</label>
+            <textarea id="body" name="body" required placeholder="Please provide details about your inquiry..."></textarea>
+            
+            <button type="submit" class="btn" id="submitBtn">Send Message</button>
+        </form>
+        
+        <div id="message" class="message hidden"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageDiv = document.getElementById('message');
+        
+        // GitHub repository details
+        const OWNER = 'RedFernStudios';
+        const REPO = 'RedFernStudios.github.io';  // or another repo if you prefer
+        const TOKEN = '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';
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            messageDiv.classList.add('hidden');
+            
+            try {
+                const formData = new FormData(form);
+                const name = formData.get('name') || 'Anonymous';
+                const email = formData.get('email') || 'Not provided';
+                const type = formData.get('type');
+                const title = formData.get('title');
+                const body = formData.get('body');
+                
+                // Format issue body
+                const issueBody = `
+**Submitted by:** ${name}
+**Email:** ${email}
+**Type:** ${type}
+
+${body}
+
+---
+*This issue was created via the contact form on ${window.location.href}*`;
+                
+                const response = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: `[${type}] ${title}`,
+                        body: issueBody,
+                        labels: ['contact-form'] // Optional: auto-label issues
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Success
+                messageDiv.textContent = 'Message sent successfully! We\'ll get back to you soon.';
+                messageDiv.className = 'message success';
+                form.reset();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.textContent = 'Failed to send message. Please try again later.';
+                messageDiv.className = 'message error';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+                messageDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
